@@ -95,9 +95,24 @@
                 scene.add( mouseHelper );
 
                 // Simple test geometry 
-                let simple_box; 
-                simple_box = new THREE.Mesh(new THREE.BoxGeometry(10,10, 10), new THREE.MeshNormalMaterial());
-                scene.add( simple_box );
+                // let simple_box; 
+                // simple_box = new THREE.Mesh(new THREE.BoxGeometry(10,10, 10), new THREE.MeshNormalMaterial());
+                // scene.add( simple_box );
+
+                // Coordinate origin 
+                function createOrigin(){ 
+                    const material = new THREE.LineBasicMaterial({ color: 0x0000ff }); 
+                    const origin_points = []; 
+                    origin_points.push( new THREE.Vector3(  10,  0,  0 ) ); 
+                    origin_points.push( new THREE.Vector3(   0, 10,  0 ) ); 
+                    origin_points.push( new THREE.Vector3(   0,  0, 10 ) ); 
+                    const geometry = new THREE.BufferGeometry().setFromPoints( origin_points ); 
+                    const origin_lines = new THREE.Line( geometry, material );  
+                    //origin_lines.width.set(3) 
+                    scene.add( origin_lines ); 
+                }
+                createOrigin();
+
 
 				const geometry = new THREE.BufferGeometry();
 				geometry.setFromPoints( [ new THREE.Vector3(), new THREE.Vector3() ] );
