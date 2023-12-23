@@ -1,0 +1,23 @@
+#left_dropdown_menu {
+    position:absolute;
+    top: 8%;
+    left: 3%;
+    width: 25%;
+} 
+
+#library_dropdown{
+    width: fit-content;
+} 
+
+#toolbar{
+    position:absolute;
+    width: 100%; 
+}
+
+.navbar {
+    --bs-navbar-padding-y: 0.0rem;    
+}
+
+.accordion {
+    --bs-accordion-btn-padding-y: 0.5rem;
+}
