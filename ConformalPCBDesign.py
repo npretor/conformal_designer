@@ -15,6 +15,49 @@
 * Export as a STEP, or 3D DXF. Later: Convert to basic gcode, using the local coordinate 
 * Mode selection(placing, routing, move(component, trace), ) 
 """
+import os 
+import numpy
+
+stl_path = "./flask_server/static/models/wing/wing.stl"
+
+def read_with_numpystl():
+    from stl import mesh
+    
+    your_mesh = None 
+
+    try:
+        your_mesh = mesh.Mesh.from_file(stl_path)  
+    except:
+        print('Could not open file') 
+        
+    # The mesh normals (calculated automatically)
+    print(your_mesh.normals)
+    # The mesh vectors
+    print(your_mesh.v0, your_mesh.v1, your_mesh.v2) 
+    return your_mesh
+
+def read_with_pymesh():
+    mesh = pymesh.load_mesh("cube.obj") 
+
+
+def get_closest_points(mesh_points, points):
+    # numpy-stl speed issue with getting only vertices
+    #    https://github.com/WoLpH/numpy-stl/issues/34
+
+    import numpy as np
+    from sklearn.neighbors import KDTree
+
+    # Get distances and indices of nearest three points to four selected points 
+    tree = KDTree(mesh_points, leaf_size=2) 
+    dist, ind = tree.query(mesh_points[10:15], k=3) 
+
+mesh = read_with_numpystl()
+# Get mesh points from vertices 
+mesh_points = numpy.concatenate(mesh.vectors) 
+
+dist, ind = get_closest_points(mesh_points, mesh) 
+
+import ipdb; ipdb.set_trace() 
 
 
 class KicadConverter:
