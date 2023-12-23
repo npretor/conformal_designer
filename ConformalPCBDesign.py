@@ -37,6 +37,7 @@ def read_with_numpystl():
     return your_mesh
 
 def read_with_pymesh():
+    import pymesh 
     mesh = pymesh.load_mesh("cube.obj") 
 
 
@@ -51,30 +52,23 @@ def get_closest_points(mesh_points, points):
     tree = KDTree(mesh_points, leaf_size=2) 
     dist, ind = tree.query(mesh_points[10:15], k=3) 
 
-mesh = read_with_numpystl()
-# Get mesh points from vertices 
-mesh_points = numpy.concatenate(mesh.vectors) 
+# Get closest points 
+# mesh = read_with_numpystl()
+# # Get mesh points from vertices 
+# mesh_points = numpy.concatenate(mesh.vectors) 
+# dist, ind = get_closest_points(mesh_points, mesh) 
+#  import ipdb; ipdb.set_trace() 
 
-dist, ind = get_closest_points(mesh_points, mesh) 
-
-import ipdb; ipdb.set_trace() 
 
 
-class KicadConverter:
-    def __init__(self) -> None:
-        """
-        Gets a Kicad file path of components returns a list of component objects 
-        - Component objects have pads with a shape 
-        """ 
-        pass 
 
 
 class Component:
     """
-    Start with dead simple, not inheritance or type categories(QFN, SMD, etc) 
+    Start with dead simple, no inheritance or type categories(QFN, SMD, etc) 
     """
     def __init__(self) -> None:
-        pass 
+        pass
 
 
 class Router:
