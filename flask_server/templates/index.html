@@ -41,7 +41,12 @@
 			let raycaster;
 			let line;
             let mouseHelper;
-            const decals = [];
+            const decals = []; 
+
+            let origin_selected = false; 
+            let destination_selected = false; 
+            let origin_point = new THREE.Vector3(); 
+            let destination_point = new THREE.Vector3(); 
 
 			const intersection = {
 				intersects: false,
@@ -51,7 +56,8 @@
 			};     
             
             const params = {
-                place: true
+                place: true,
+                route: false
             };
 
 			const mouse = new THREE.Vector2();
@@ -156,14 +162,88 @@
 
                 window.addEventListener( 'pointerup', function ( event ) {
                     if ( moved === false ) {
+                        
+                        if ((params.place) && (params.route)){
+                            origin_selected = false; 
+                            destination_selected = false; 
+                            console.log('invalid configuration');
 
-                        if (params.place){
+                        // Placing  
+                        } else if (params.place){
+                            origin_selected = false; 
+                            destination_selected = false;                            
                             checkIntersection( event.clientX, event.clientY );
-                        } else{
-                            checkIntersectionComponents( event.clientX, event.clientY );
+                            if ( intersection.intersects ) placeComponent();
+
+                        // Routing 
+                        } else if (params.route) {
+                            // Mark blocked areas on the mesh later 
+
+                            // One component is selected 
+                            if (origin_selected || destination_selected) {
+                                // Route 
+                                /*
+                                POST coordinates to the server at /route 
+                                Find closest coordinate to each one 
+                                Route between  
+                                */
+                                
+                                // Set selected component to destination
+                                checkIntersectionComponents( event.clientX, event.clientY );                                 
+
+                                if ( intersection.intersects_components ) {
+                                    destination_point.set(intersection.point.x, intersection.point.y, intersection.point.z );
+                                    destination_selected = true;
+                                    
+                                    let route_points = {
+                                        "origin": {
+                                            "x": origin_point.x, 
+                                            "y": origin_point.y, 
+                                            "z": origin_point.z 
+                                        },
+                                        "destination": {
+                                            "x": destination_point.x, 
+                                            "y": destination_point.y, 
+                                            "z": destination_point.z 
+                                        },                                        
+                                    }
+                                    fetch('/route',{
+                                        method:'post',
+                                        headers:{
+                                            "Accept": "application/json, text/plain, */*",
+                                            "Content-type": "application/json; charset = UTF-8"
+                                        },   
+                                        body: JSON.stringify(route_points) 
+                                    }).then(function(response){
+                                        //console.log(response);
+                                        response.json().then(function(data){
+                                            console.log(data);
+                                            parseAndDrawPath(data.path);
+                                        });
+                                    }).catch(function(error){
+                                        console.warn('Unable to reply', error)
+                                    })
+
+                                } 
+                                
+                            
+                            // No components are selected 
+                            } else if (!(origin_selected) && !(destination_selected) ) {
+
+                                // Set selected component to origin
+                                checkIntersectionComponents( event.clientX, event.clientY ); 
+                                if ( intersection.intersects_components ) {
+                                    origin_point.set(intersection.point.x, intersection.point.y, intersection.point.z );
+                                    origin_selected = true;
+                                } 
+
+                            }
+                            // checkIntersectionComponents( event.clientX, event.clientY ); 
+                        } else {
+                            console.warn('something went wrong with the settings');
                         }
                         
-                        if ( intersection.intersects ) shoot();
+                        
                     }
                 }); 
 
@@ -224,6 +304,23 @@
                     }
                 }            
 
+                function parseAndDrawPath(path){
+                    const line_points = [];
+                    const material = new THREE.LineBasicMaterial( {
+                        color: 0xffffff,
+                        linewidth: 1,
+                        linecap: 'round', //ignored by WebGLRenderer
+                        linejoin:  'round' //ignored by WebGLRenderer
+                    });
+                    for (let path_point of path) {
+                        // console.log(path_point);
+                        line_points.push( new THREE.Vector3( path_point.x, path_point.y, path_point.z ) );
+                    }
+                    const mypath = new THREE.BufferGeometry().setFromPoints(line_points) 
+                    const myline = new THREE.Line( mypath, material );
+                    scene.add(myline);
+                }
+
                 function checkIntersectionComponents( x, y ){
                     // Options no intersection, intersection with primary, intersection with other component 
                     /*
@@ -272,7 +369,8 @@
 
                 const gui = new GUI();
 
-                gui.add( params, 'place' );
+                gui.add( params, 'place' ); 
+                gui.add( params, 'route' ); 
                 gui.open();
 
                 onWindowResize();
@@ -312,14 +410,26 @@
 
             function placeComponent(){
                 // At a given location after placing a component, send the coordinate and position vectors to the server 
-                
+                pointer_position.copy( intersection.point );
+                orientation.copy( mouseHelper.rotation );
+
+                const sphere_geometry   = new THREE.SphereGeometry( 1, 32, 16 ); 
+                const sphere_material   = new THREE.MeshBasicMaterial( { color: 0xffff00 } ); 
+                const sphere            = new THREE.Mesh( sphere_geometry, sphere_material); 
+
+                const m = new THREE.Mesh(sphere_geometry, sphere_material);
+                m.position.set(pointer_position.x, pointer_position.y, pointer_position.z);
+
+                component_group.add(m); 
+                component_list.push(m);
+                saveCurrentGeometry()
             }            
 
             function saveCurrentGeometry(){
                 // Save the primary mesh
                 // Save each item's id and location 
 
-                // POST to 
+                // POST to save_components
                 fetch('/save_components',{
                     method:'post',
                     headers:{
@@ -332,6 +442,17 @@
                 }).catch(function(error){
                     console.warn('Unable to reply', error)
                 })
+            }
+
+            function stateHandler(){
+                function placeComponentsMode(){
+
+                }
+
+                function routeMode(){
+
+                }
+            
             }
 
             function onWindowResize() {
