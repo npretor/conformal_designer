@@ -14,6 +14,7 @@ app = Flask(__name__)
 # - - - - - - - - Initialize the database - - - - - - - - # 
 database = {}
 database["components"]  = {}
+database["active_component_id"] = None 
 
 
 # - - - - - - - - Load the primary 3D model - - - - - - - - # 
@@ -28,7 +29,13 @@ router = Router()
 # - - - - - - - - Routes - - - - - - - - # 
 @app.route("/")
 def home():
-    return render_template('index.html') 
+    
+    my_components = {} 
+    my_components['0402'] = [0.5, 0.35, 1.0] # Width, height, depth 
+    my_components['0603'] = [0.85, 0.45, 1.550] # Width, height, depth     
+
+    return render_template('index.html', mesh_attributes=mesh_attributes, my_components=my_components) 
+
 
 @app.route("/save_components", methods={"GET","POST"})
 def save_components():
@@ -36,6 +43,25 @@ def save_components():
     database["components"] = json.loads(request.data) 
 
     return json.dumps({'success':True}), 200, {'ContentType':'application/json'} 
+
+@app.route("/set_active_component", methods={"GET", "POST"}) 
+def set_active_component():
+    component_id = json.loads(request.data)['active_component_id']
+    print("Active component: ",component_id) 
+    database["active_component_id"] = component_id
+    return json.dumps({'success':True}), 200, {'ContentType':'application/json'} 
+
+@app.route("/list_components", methods={"GET", "POST"}) 
+def list_components():
+    """
+    0402 = 0.04in long x 0.02in wide x 0.02in tall  
+    
+    """
+    my_components = {} 
+    my_components['0402'] = [0.5, 0.35, 1.0] # Width, height, depth 
+    my_components['0603'] = [0.85, 0.45, 1.550] # Width, height, depth 
+    return jsonify(my_components) 
+
 
 @app.route("/route_euclidean",methods={"GET","POST"}) 
 def route_euclidean():
