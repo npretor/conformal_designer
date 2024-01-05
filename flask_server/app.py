@@ -1,6 +1,6 @@
-import os 
+import os, io
 import json 
-from flask import Flask, render_template, request, redirect, jsonify, Response
+from flask import Flask, render_template, request, redirect, jsonify, Response, send_file
 import trimesh
 
 import sys 
@@ -14,9 +14,11 @@ app = Flask(__name__)
 
 # - - - - - - - - Initialize the database - - - - - - - - # 
 database = {}
-database["components"]  = {}
+database["smd_components"]  = {}
+database["components_cache"]  = {}
 database["active_component_id"] = None 
-
+database['smd_components']['0402'] = [0.5, 0.35, 1.0] # Width, height, depth 
+database['smd_components']['0603'] = [0.85, 0.45, 1.550] # Width, height, depth  
 
 # - - - - - - - - Load the primary 3D model - - - - - - - - # 
 mesh_path = '/Users/nathan/github/conformal_designer/flask_server/static/models/wing/wing.stl'
@@ -32,6 +34,9 @@ router = Router()
 # - - - - - - - - Routes - - - - - - - - # 
 @app.route("/")
 def home():
+
+    return render_template('index.html', mesh_attributes=mesh_attributes, my_components=database['smd_components']) 
+
 @app.route("/primary_mesh_file", methods={"GET"}) 
 def primary_mesh_file():
     f = mesh_parser.export(mesh)
@@ -41,16 +46,34 @@ def primary_mesh_file():
 @app.route("/save_components", methods={"GET","POST"})
 def save_components():
 
-    database["components"] = json.loads(request.data) 
+    database["components_cache"] = json.loads(request.data) 
 
     return json.dumps({'success':True}), 200, {'ContentType':'application/json'} 
+
+
+@app.route("/place", methods={"GET", "POST"}) 
+def place():
+    """
+    This assumes everything is a variant of box-geometry 
+    Returns     
+        Component shape: (width, height, depth) 
+    """
 
 @app.route("/set_active_component", methods={"GET", "POST"}) 
 def set_active_component():
-    component_id = json.loads(request.data)['active_component_id']
-    print("Active component: ",component_id) 
-    database["active_component_id"] = component_id
-    return json.dumps({'success':True}), 200, {'ContentType':'application/json'} 
+    if request.method == 'POST':
+        component_id = json.loads(request.data)['active_component_id']
+        print("Active component: ",component_id) 
+        
+        database["active_component_id"] = component_id
+        return json.dumps({'success':True}), 200, {'ContentType':'application/json'} 
+    else:
+        component_id = database["active_component_id"] 
+        active_component_shape = database['smd_components'][str(component_id)] 
+        print('active component id is: ', component_id) 
+        print("shape is: ", active_component_shape)
+
+        return jsonify(active_component_shape) 
 
 @app.route("/list_components", methods={"GET", "POST"}) 
 def list_components():

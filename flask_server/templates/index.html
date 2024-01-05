@@ -12,6 +12,7 @@
         <!-- Jquery -->
         <script src="https://code.jquery.com/jquery-3.6.0.min.js" integrity="sha256-/xUj+3OJU5yExlq6GSYGSHk7tPXikynS7ogEvDej/m4=" crossorigin="anonymous"></script>
 
+
         <!-- Custom CSS for the site  -->
         <link href="static/css/component_placer.css" rel="stylesheet">
 
@@ -38,6 +39,7 @@
             // Variables 
             let renderer, scene, camera, stats; 
             let mesh;
+            let primary_mesh_id;
 			let raycaster;
 			let line;
             let mouseHelper;
@@ -65,7 +67,9 @@
 
             // Groups: Components, traces, ratnest  
             const component_group = new THREE.Group();  
+            const primary_geometry_group = new THREE.Group();
             const component_list = [];           
+
 
             const pointer_position = new THREE.Vector3(); 
             const orientation = new THREE.Euler(); 
@@ -89,7 +93,7 @@
                 // Scene 
                 scene = new THREE.Scene();
                 scene.add( component_group );  
-                
+                //scene.add(primary_geometry_group);                
 
                 // Camera 
                 camera = new THREE.PerspectiveCamera( 45, window.innerWidth / window.innerHeight, 1, 1000 );
@@ -114,6 +118,13 @@
                 // Raycaster for intersections 
                 raycaster = new THREE.Raycaster();
 
+                // Grid 
+                const size = 100;
+                const divisions = 100;
+                const gridHelper = new THREE.GridHelper( size, divisions );
+                scene.add( gridHelper );                
+
+
                 // Mouse helper 
                 mouseHelper = new THREE.Mesh( new THREE.BoxGeometry( 1, 1, 10 ), new THREE.MeshNormalMaterial() );
                 mouseHelper.visible = false;
@@ -126,17 +137,11 @@
 
                 // Coordinate origin 
                 function createOrigin(){ 
-                    const material = new THREE.LineBasicMaterial({ color: 0x0000ff }); 
-                    const origin_points = []; 
-                    origin_points.push( new THREE.Vector3(  10,  0,  0 ) ); 
-                    origin_points.push( new THREE.Vector3(   0, 10,  0 ) ); 
-                    origin_points.push( new THREE.Vector3(   0,  0, 10 ) ); 
-                    const geometry = new THREE.BufferGeometry().setFromPoints( origin_points ); 
-                    const origin_lines = new THREE.Line( geometry, material );  
-                    //origin_lines.width.set(3) 
-                    scene.add( origin_lines ); 
+                    const axesHelper = new THREE.AxesHelper( 10 );
+                    scene.add( axesHelper );                    
                 }
                 createOrigin();
+
 
 
 				const geometry = new THREE.BufferGeometry();
@@ -146,7 +151,7 @@
                 line = new THREE.Line( geometry, new THREE.LineBasicMaterial() );
 				scene.add( line );
 
-                loadPrimaryGeometry();
+                loadPrimaryGeometry();  
                 
                 // Check for if we are interecting 
                 window.addEventListener( 'resize', onWindowResize );
@@ -196,18 +201,18 @@
                                     destination_selected = true;
                                     
                                     let route_points = {
-                                        "origin": {
-                                            "x": origin_point.x, 
-                                            "y": origin_point.y, 
-                                            "z": origin_point.z 
-                                        },
-                                        "destination": {
-                                            "x": destination_point.x, 
-                                            "y": destination_point.y, 
-                                            "z": destination_point.z 
-                                        },                                        
+                                        "origin": [
+                                             origin_point.x, 
+                                             origin_point.y, 
+                                             origin_point.z 
+                                        ],
+                                        "destination": [
+                                            destination_point.x, 
+                                            destination_point.y, 
+                                            destination_point.z 
+                                        ],                                        
                                     }
-                                    fetch('/route',{
+                                    fetch('/route_shortest_distance',{
                                         method:'post',
                                         headers:{
                                             "Accept": "application/json, text/plain, */*",
@@ -218,7 +223,7 @@
                                         //console.log(response);
                                         response.json().then(function(data){
                                             console.log(data);
-                                            parseAndDrawPath(data.path);
+                                            parseAndDrawTubes(data.path);
                                         });
                                     }).catch(function(error){
                                         console.warn('Unable to reply', error)
@@ -313,12 +318,43 @@
                         linejoin:  'round' //ignored by WebGLRenderer
                     });
                     for (let path_point of path) {
-                        // console.log(path_point);
-                        line_points.push( new THREE.Vector3( path_point.x, path_point.y, path_point.z ) );
+                        console.log(path_point);
+                        line_points.push( new THREE.Vector3( path_point[0], path_point[1], path_point[2] ) );
                     }
-                    const mypath = new THREE.BufferGeometry().setFromPoints(line_points) 
+                    //                                                  radius, segments
+                    const geometry = new THREE.TubeGeometry( path, 20, 2, 16, false );
+                    //const mypath = new THREE.BufferGeometry().setFromPoints(line_points) 
                     const myline = new THREE.Line( mypath, material );
+                    
                     scene.add(myline);
+                }
+
+                function parseAndDrawTubes(path){
+                    const line_points = [];
+
+                    const pathSpline = new THREE.CatmullRomCurve3(line_points);
+                    const extrudeSettings1 = {
+                        steps: 200,
+                        bevelEnabled: false,
+                        extrudePath: pathSpline
+				    };
+
+                    for (let path_point of path){
+                        console.log(path_point);
+                        line_points.push( new THREE.Vector3( path_point[0], path_point[1], path_point[2] ) );
+                    }
+                    
+                    // const geometry1 = new THREE.ExtrudeGeometry( pathSpline, extrudeSettings1 );
+                    
+                    // const material1 = new THREE.MeshLambertMaterial( { color: 0xff00ff } );
+                    // const mesh1 = new THREE.Mesh( geometry1, material1 );
+
+                    var pathCurve = new THREE.CatmullRomCurve3(line_points);
+                    const tube_geometry = new THREE.TubeGeometry( pathCurve, 20, 1, 8, false );
+                    const material = new THREE.MeshBasicMaterial( { color: 0x888888 } );
+                    const mesh_path = new THREE.Mesh( tube_geometry, material );
+                    scene.add( mesh_path );
+
                 }
 
                 function checkIntersectionComponents( x, y ){
@@ -367,6 +403,14 @@
                     }                   
                 }
 
+                function toggleMeshEdges(){
+                    if (scene.line.visible == true){
+                        scene.line.visible = false; 
+                    } else {
+                        scene.line.visible = true; 
+                    }
+                }
+
                 const gui = new GUI();
 
                 gui.add( params, 'place' ); 
@@ -378,18 +422,49 @@
 
             }; 
 
-            function loadPrimaryGeometry(){
+            function loadPrimaryGeometryFromServer(){ 
+                loader.load('http://localhost:8000/primary_mesh_file', function (mesh_geometry){
+                    // Add the mesh geometry 
+                    mesh = new THREE.Mesh(mesh_geometry, material); 
+                    mesh.scale.set( 1, 1, 1 ); 
+                    component_group.add(mesh); 
+                    primary_geometry_group.add(mesh); 
+                    scene.add(mesh); 
+
+                    // Add a wireframe 
+                    const wireframe = new THREE.WireframeGeometry( mesh_geometry );
+                    const line = new THREE.LineSegments( wireframe );
+                    line.scale.set( 1.001, 1.001, 1.001 );
+                    line.material.depthTest = false;
+                    line.material.opacity = 0.9;
+                    line.material.transparent = false;
+                    scene.add( line );
+                });                
+            }
+
+            function loadPrimaryGeometry(){ 
                 const material= new THREE.MeshNormalMaterial() 
                 // const material = new THREE.MeshPhysicalMaterial({ color: 0xaaaaaa })
                 const loader = new STLLoader();
 
                 loader.load('../static/models/wing/wing.stl', function (mesh_geometry){
-                    mesh = new THREE.Mesh(mesh_geometry, material);
-                    component_group.add(mesh);
-                    scene.add(mesh);
-                    mesh.scale.set( 1, 1, 1 );
+                    // Add the mesh geometry 
+                    mesh = new THREE.Mesh(mesh_geometry, material); 
+                    mesh.scale.set( 1, 1, 1 ); 
+                    component_group.add(mesh); 
+                    primary_geometry_group.add(mesh); 
+                    scene.add(mesh); 
+
+                    // Add a wireframe 
+                    const wireframe = new THREE.WireframeGeometry( mesh_geometry );
+                    const line = new THREE.LineSegments( wireframe );
+                    line.scale.set( 1.001, 1.001, 1.001 );
+                    line.material.depthTest = false;
+                    line.material.opacity = 0.9;
+                    line.material.transparent = false;
+                    scene.add( line );
                 });
-            }
+            }       
 
 			function shoot() {
 
@@ -413,15 +488,24 @@
                 pointer_position.copy( intersection.point );
                 orientation.copy( mouseHelper.rotation );
 
-                const sphere_geometry   = new THREE.SphereGeometry( 1, 32, 16 ); 
-                const sphere_material   = new THREE.MeshBasicMaterial( { color: 0xffff00 } ); 
-                const sphere            = new THREE.Mesh( sphere_geometry, sphere_material); 
+                // Get the latest geometry here 
+                fetch('/set_active_component')
+                    .then((response) => response.json())
+                    .then((data) => {
+                        console.log(data);
 
-                const m = new THREE.Mesh(sphere_geometry, sphere_material);
-                m.position.set(pointer_position.x, pointer_position.y, pointer_position.z);
+                        // Default to rectangular geometry 
+                        const component_geometry = new THREE.BoxGeometry( data[0], data[1], data[2] ); 
+                        const sphere_material   = new THREE.MeshBasicMaterial( { color: 0xffff00 } ); 
 
-                component_group.add(m); 
-                component_list.push(m);
+                        const m = new THREE.Mesh(component_geometry, sphere_material);
+                        m.position.set(pointer_position.x, pointer_position.y, pointer_position.z);
+
+                        component_group.add(m); 
+                        component_list.push(m);
+                    });
+
+
                 saveCurrentGeometry()
             }            
 
@@ -471,10 +555,12 @@
 
         <script>
 
-            // Component selection box 
+            // Component selection  
             $(document).ready(function(){
                 $("#componentTable").delegate("tr.clickable", "click", function(event){                
                     console.log(event.currentTarget.id);
+                    $("tr.clickable").removeClass("active");
+                    $(event.currentTarget).addClass("active");
 
                     // Tell the server to set this as the active component 
                     fetch('/set_active_component', {
@@ -505,6 +591,19 @@
             </button>
             <div class="collapse navbar-collapse" id="navbarSupportedContent">
                 <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+
+                <!-- Place -->
+                <li class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                    Place
+                    </a>
+                    <ul class="dropdown-menu">
+                    <li><a class="dropdown-item" href="#">Place components</a></li>
+                    <li><a class="dropdown-item" href="#">Place bridges</a></li>
+                    <li><hr class="dropdown-divider"></li>
+                    <li><a class="dropdown-item" href="#">Place avoids</a></li>
+                    </ul>
+                </li>
 
                 <!-- Move -->
                 <li class="nav-item dropdown">
@@ -632,19 +731,20 @@
                     <div class="accordion-item">
                     <h2 class="accordion-header">
                         <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseTwo" aria-expanded="false" aria-controls="collapseTwo">
-                        Accordion Item #2
+                        Geometry attributes
                         </button>
                     </h2>
                     <div id="collapseTwo" class="accordion-collapse collapse" data-bs-parent="#accordionExample">
                         <div class="accordion-body">
-                        <strong>This is the second item's accordion body.</strong> It is hidden by default, until the collapse plugin adds the appropriate classes that we use to style each element. These classes control the overall appearance, as well as the showing and hiding via CSS transitions. You can modify any of this with custom CSS or overriding our default variables. It's also worth noting that just about any HTML can go within the <code>.accordion-body</code>, though the transition does limit overflow.
+                            <p><b>Vertices:</b> {{mesh_attributes['num_vertices']}}  </p> 
+                            <p><b>Surface Area:</b> {{mesh_attributes['area']}} </p>  
                         </div>
                     </div>
                     </div>
                     <div class="accordion-item">
                     <h2 class="accordion-header">
                         <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseThree" aria-expanded="false" aria-controls="collapseThree">
-                        Accordion Item #3
+                        Project settings
                         </button>
                     </h2>
                     <div id="collapseThree" class="accordion-collapse collapse" data-bs-parent="#accordionExample">
