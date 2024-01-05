@@ -6,6 +6,7 @@ import trimesh
 import sys 
 sys.path.append('..') 
 from Spatial import Router 
+from MeshParser import MeshParser
 
 
 app = Flask(__name__)
@@ -18,8 +19,10 @@ database["active_component_id"] = None
 
 
 # - - - - - - - - Load the primary 3D model - - - - - - - - # 
-primary_stl_path = "./flask_server/static/models/wing/wing.stl" 
-mesh = trimesh.load_mesh('/Users/nathan/github/conformal_designer/flask_server/static/models/wing/wing.stl') 
+mesh_path = '/Users/nathan/github/conformal_designer/flask_server/static/models/wing/wing.stl'
+mesh_parser = MeshParser()
+mesh = mesh_parser.read(mesh_path, preprocess=True) 
+mesh_attributes = mesh_parser.getAttributesJSON(mesh) 
 
 
 # - - - - - - - - Initialize the router - - - - - - - - # 
@@ -29,13 +32,11 @@ router = Router()
 # - - - - - - - - Routes - - - - - - - - # 
 @app.route("/")
 def home():
-    
-    my_components = {} 
-    my_components['0402'] = [0.5, 0.35, 1.0] # Width, height, depth 
-    my_components['0603'] = [0.85, 0.45, 1.550] # Width, height, depth     
-
-    return render_template('index.html', mesh_attributes=mesh_attributes, my_components=my_components) 
-
+@app.route("/primary_mesh_file", methods={"GET"}) 
+def primary_mesh_file():
+    f = mesh_parser.export(mesh)
+    # import ipdb; ipdb.set_trace()
+    return send_file(io.BytesIO(f), mimetype='application/sla') 
 
 @app.route("/save_components", methods={"GET","POST"})
 def save_components():
