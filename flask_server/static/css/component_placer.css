@@ -21,3 +21,26 @@
 .accordion {
     --bs-accordion-btn-padding-y: 0.5rem;
 }
+
+#componentTable {
+    width:100%;
+}
+
+#componentTable .clickable{
+    cursor: pointer;
+}
+
+#componentTable .clickable:hover{
+    background-color: darkcyan;
+    cursor: pointer;
+} 
+
+/* #componentTable .clickable:active{
+    background-color: darkcyan;
+    cursor: pointer;
+}  */
+
+tr .clickable .active{ 
+    background-color: darkcyan;
+    cursor: pointer;
+} 
