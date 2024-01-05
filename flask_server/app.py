@@ -21,8 +21,8 @@ database['smd_components']['0402'] = [0.5, 0.35, 1.0] # Width, height, depth
 database['smd_components']['0603'] = [0.85, 0.45, 1.550] # Width, height, depth  
 
 # - - - - - - - - Load the primary 3D model - - - - - - - - # 
-mesh_path = '/Users/nathan/github/conformal_designer/flask_server/static/models/wing/wing.stl'
-mesh_parser = MeshParser()
+mesh_path = './static/models/wing/wing.stl'
+mesh_parser = MeshParser() 
 mesh = mesh_parser.read(mesh_path, preprocess=True) 
 mesh_attributes = mesh_parser.getAttributesJSON(mesh) 
 

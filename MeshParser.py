@@ -4,7 +4,7 @@ import trimesh
 from trimesh.remesh import subdivide_to_size
 from trimesh.exchange.export import export_mesh
 from trimesh.exchange import stl 
-from sklearn.neighbors import KDTree 
+# from sklearn.neighbors import KDTree 
 
 
 class MeshParser:
@@ -14,16 +14,14 @@ class MeshParser:
 
     def read(self, filepath, preprocess=False):
         
-        try:
-            mesh = trimesh.load_mesh(filepath)   
-            
-            if preprocess:
-                mesh = self.preprocess(mesh) 
-
-            return mesh
+        mesh = trimesh.load_mesh(filepath)   
         
-        except:
-            print('could not load')  
+        if preprocess:
+            mesh = self.preprocess(mesh) 
+
+        return mesh
+        
+
         
 
     def write(self, mesh, filepath):
@@ -57,7 +55,7 @@ class MeshParser:
     def getAttributesJSON(self, mesh):
         
         self.meshdata['volume'] = mesh.volume 
-        self.meshdata['is_convex'] = mesh.is_convex 
+        # self.meshdata['is_convex'] = mesh.is_convex 
         self.meshdata['centroid'] = mesh.centroid  
         self.meshdata['area'] = mesh.area  
         self.meshdata['num_vertices'] = len(mesh.vertices) 
@@ -73,19 +71,19 @@ class MeshParser:
         #  import ipdb; ipdb.set_trace()         
 
 
-    def get_closest_points(mesh_points, query_points, n_points=1):
-        """
-        mesh_points:  2D numpy array
-        query_points:       2D numpy array 
-        n_points: integer of points to return 
-        """
-        # numpy-stl speed issue with getting only vertices
-        #    https://github.com/WoLpH/numpy-stl/issues/34
+    # def get_closest_points(mesh_points, query_points, n_points=1):
+    #     """
+    #     mesh_points:  2D numpy array
+    #     query_points:       2D numpy array 
+    #     n_points: integer of points to return 
+    #     """
+    #     # numpy-stl speed issue with getting only vertices
+    #     #    https://github.com/WoLpH/numpy-stl/issues/34
 
 
-        # Get distances and indices of nearest three points to four selected points 
-        tree = KDTree(mesh_points, leaf_size=2) 
-        dist, ind = tree.query(query_points, k=n_points) 
+    #     # Get distances and indices of nearest three points to four selected points 
+    #     tree = KDTree(mesh_points, leaf_size=2) 
+    #     dist, ind = tree.query(query_points, k=n_points) 
 
 if __name__ == "__main__":
 
@@ -93,4 +91,3 @@ if __name__ == "__main__":
     mp = MeshParser()
     mesh = mp.read(example_filepath, preprocess=True)  
     print(mesh)
-    import ipdb; ipdb.set_trace()
