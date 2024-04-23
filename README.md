@@ -13,7 +13,7 @@ docker build --platform linux/amd64 -t flask-container .
 
 ## Run
 ```
-docker run -it flask-container:latest
+docker run -it -p 8000:8000 flask-container:latest
 ```
 
 ## Deploy 
@@ -33,7 +33,7 @@ aws lightsail create-container-service-deployment --service-name flask-service -
 Build the server 
 ```
 docker build -t flask-container .
-docker run -it flask-container:latest
+docker run -it -p 8000:8000 flask-container:latest
 ```
 
 Run in the container 
