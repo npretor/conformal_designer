@@ -1,5 +1,6 @@
 # Conformal Circuit Designer
 This is a conformal PCB designer that uses ThreeJS for the modeling and frontend, and python on the backend for file parsing and routing on a mesh. 
+![alt text](/media/debug_screenshot.png)
 
 ## Installation 
 ```
