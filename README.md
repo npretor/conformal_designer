@@ -1,5 +1,5 @@
-# conformal_designer
-Conformal PCB designer
+# Conformal Circuit Designer
+This is a conformal PCB designer that uses ThreeJS for the modeling and frontend, and python on the backend for file parsing and routing on a mesh. 
 
 ## Installation 
 ```
@@ -20,7 +20,7 @@ docker build -t flask-container .
 
 ## Docker run  
 ```
-
+docker run -it flask-container:latest
 ```
 
 ## Push the container to AWS 
