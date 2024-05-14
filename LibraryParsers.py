@@ -10,17 +10,21 @@ class KicadConverter:
         - Component objects have pads with a shape
         - Ignore 3D geometry and derive from the pads for now 
         """ 
-        # eagle_libraries = "/Users/nathan/github/conformal_designer/flask_server/static/ecad/eagle/SparkFun-Eagle-Libraries" 
-        # example_library_path = os.path.join(eagle_libraries, "SparkFun-Resistors.lbr") 
+        # Kicad main libraries
+        #    https://gitlab.com/kicad/libraries/kicad-footprints/-/tree/master/LED_SMD.pretty?ref_type=heads
+        # Older eagle libraries for digikey 
+        #     https://github.com/Digi-Key/digikey-kicad-library/tree/master
+
 
     def read(self, path):
         try:
             footprint = Footprint().from_file(path) 
             return footprint
         except:
-            raise
+            raise 
 
-    def parse_to_json(self, footprint):
+    def parse_to_json(self, footprint): 
+        # Create component template 
         component = {
             "name": footprint.entryName, 
             # "description": footprint.description, 

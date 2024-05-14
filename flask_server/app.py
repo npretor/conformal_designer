@@ -18,7 +18,8 @@ database["smd_components"]  = {}
 database["components_cache"]  = {}
 database["active_component_id"] = None 
 database['smd_components']['0402'] = [0.5, 0.35, 1.0] # Width, height, depth 
-database['smd_components']['0603'] = [0.85, 0.45, 1.550] # Width, height, depth  
+database['smd_components']['0603'] = [0.85, 0.45, 1.550] # Width, height, depth 
+database['smd_components']['QFN-32'] = [8.0, 1.0, 8.0]
 
 # - - - - - - - - Load the primary 3D model - - - - - - - - # 
 mesh_path = './static/models/wing/wing.stl'

@@ -313,7 +313,7 @@
                     const line_points = [];
                     const material = new THREE.LineBasicMaterial( {
                         color: 0xffffff,
-                        linewidth: 1,
+                        linewidth: 0.25,
                         linecap: 'round', //ignored by WebGLRenderer
                         linejoin:  'round' //ignored by WebGLRenderer
                     });
@@ -350,7 +350,7 @@
                     // const mesh1 = new THREE.Mesh( geometry1, material1 );
 
                     var pathCurve = new THREE.CatmullRomCurve3(line_points);
-                    const tube_geometry = new THREE.TubeGeometry( pathCurve, 20, 1, 8, false );
+                    const tube_geometry = new THREE.TubeGeometry( pathCurve, 20, 0.2, 8, false );
                     const material = new THREE.MeshBasicMaterial( { color: 0x888888 } );
                     const mesh_path = new THREE.Mesh( tube_geometry, material );
                     scene.add( mesh_path );
@@ -555,7 +555,7 @@
 
         <script>
 
-            // Component selection  
+            // Component selection menu
             $(document).ready(function(){
                 $("#componentTable").delegate("tr.clickable", "click", function(event){                
                     console.log(event.currentTarget.id);
@@ -674,9 +674,9 @@
             </div>
             </div>
         </nav>
-
+        
+        <!-- Left dropdown menu -->
         <div id="container">
-
             <div id="left_dropdown_menu">  
                 <div class="accordion" id="accordionExample">
                     <div class="accordion-item">
@@ -755,7 +755,6 @@
                     </div>
                 </div>            
             </div>
-
         </div>
 
         <!-- JS -->
